@@ -1,69 +1,6 @@
 let eventBus = new Vue();
 
-Vue.component('column', {
-    props:{
-        column_name: {
-            type : String,
-            required : true
-        },
-        id: {
-            type: String,
-            required: true,
-        },
-        arr:{
-            type: Array,
-            required: true,
-        }
-    },
-    template:`
-    <div class="column">
-        <h2>{{ column_name }}</h2>
-        <div class="task_space" v-if="arr.length" v-for="(list, index) in arr">
-            <h2>{{list.title}}</h2>
-            <p><input type="checkbox" @click="checkboxClick(index, 1)" v-model="arr[index].activity.task1">{{list.task1}}</p>
-            <p><input type="checkbox" @click="checkboxClick(index, 2)" v-model="arr[index].activity.task2">{{list.task2}}</p>
-            <p><input type="checkbox" @click="checkboxClick(index, 3)" v-model="arr[index].activity.task3">{{list.task3}}</p>
-            <p v-if="list.task4"><input type="checkbox" @click="checkboxClick(index, 4)" v-model="arr[index].activity.task4">{{list.task4}}</p>
-            <p v-if="list.task5"><input type="checkbox" @click="checkboxClick(index, 5)" v-model="arr[index].activity.task5">{{list.task5}}</p>
-        </div>
-    </div>
-`,
-    data() {
-        return {    
 
-        }
-    },
-    methods:{
-        checkboxClick(firstId, secondId){
-            let el;
-            firstId = parseInt(firstId);
-
-            el = this.arr[firstId];
-                
-            if(el){
-                switch(secondId){
-                    case 1:
-                        el.active.task1 = !el.active.task1;
-                        break;
-                    case 2:
-                        el.active.task2 = !el.active.task2;
-                        break;
-                    case 3:
-                        el.active.task3 = !el.active.task3;
-                        break;
-                    case 4:
-                        el.active.task4 = !el.active.task4;
-                        break;
-                    case 5:
-                        el.active.task5 = !el.active.task5;
-                        break;
-                }
-                eventBus.$emit('check-activity', firstId, this.id);
-                console.log(el.active);
-            }
-        },
-    }
-})
 
 
 Vue.component('creator', {
@@ -126,9 +63,7 @@ Vue.component('creator', {
         }
     },
     mounted(){
-        eventBus.$on('checkCosponse', function(){
-            
-        }.bind(this))
+
     },
     methods:{
         addTask(){
@@ -162,10 +97,71 @@ Vue.component('creator', {
                 }else{
                     this.errors = ['Достигнуто максимальное колличество списков в первом столбце.'];
                 }
-            
-        
-            
         }
+    }
+})
+
+Vue.component('column', {
+    props:{
+        column_name: {
+            type : String,
+            required : true
+        },
+        id: {
+            type: String,
+            required: true,
+        },
+        arr:{
+            type: Array,
+            required: true,
+        }
+    },
+    template:`
+    <div class="column">
+        <h2>{{ column_name }}</h2>
+        <div class="task_space" v-if="arr.length" v-for="(list, index) in arr">
+            <h2>{{list.title}}</h2>
+            <p><input type="checkbox" @click="checkboxClick(index, 1)" v-model="arr[index].activity.task1">{{list.task1}}</p>
+            <p><input type="checkbox" @click="checkboxClick(index, 2)" v-model="arr[index].activity.task2">{{list.task2}}</p>
+            <p><input type="checkbox" @click="checkboxClick(index, 3)" v-model="arr[index].activity.task3">{{list.task3}}</p>
+            <p v-if="list.task4"><input type="checkbox" @click="checkboxClick(index, 4)" v-model="arr[index].activity.task4">{{list.task4}}</p>
+            <p v-if="list.task5"><input type="checkbox" @click="checkboxClick(index, 5)" v-model="arr[index].activity.task5">{{list.task5}}</p>
+        </div>
+    </div>
+    `,
+    data() {
+        return {    
+
+        }
+    },
+    methods:{
+        checkboxClick(listId, taskId){//Проверил, el.activity - объект - реагирует на нажатия по чекбоксам, listId - цифра, this.id - строка
+            let el;
+            firstId = parseInt(listId);
+            el = this.arr[listId];
+                
+            if(el){
+                switch(taskId){
+                    case 1:
+                        el.activity.task1 = !el.activity.task1;
+                        break;
+                    case 2:
+                        el.activity.task2 = !el.activity.task2;
+                        break;
+                    case 3:
+                        el.activity.task3 = !el.activity.task3;
+                        break;
+                    case 4:
+                        el.activity.task4 = !el.activity.task4;
+                        break;
+                    case 5:
+                        el.activity.task5 = !el.activity.task5;
+                        break;
+                }
+                eventBus.$emit('check-activity', this.id, listId);
+
+            }
+        },
     }
 })
 
@@ -182,7 +178,18 @@ let app = new Vue({
     mounted(){
         eventBus.$on('form-created', function(list){//Проверил, получаемый объект валиден.
             this.tasks.push(list);
-            console.log(this.tasks[0].task1)
+        }.bind(this)),
+
+        eventBus.$on('check-activity', function(columnId, listId){//Проверил, копирование успешное.  Перемещение копии , и удаление успешно, последующих проблем с чекбоксами во 2 нет- можно нажимать.
+            let el;
+            if(columnId == 'first'){
+                el = Object.assign({}, this.tasks[listId]);
+                el.activity = Object.assign({}, this.tasks[listId].activity);
+
+                this.tasks_in_process.push(el);
+                this.tasks.splice(listId, 1);
+                
+            }
         }.bind(this))
     }
 })
